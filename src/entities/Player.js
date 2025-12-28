@@ -52,7 +52,98 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
                 frames: scene.anims.generateFrameNumbers('char_jack', { start: 8, end: 11 }),
                 frameRate: 8,
                 repeat: -1
+            });// src/entities/Player.js
+import { TILE_SIZE } from '../core/Constants.js';
+
+export default class Player extends Phaser.Physics.Arcade.Sprite {
+    constructor(scene, x, y) {
+        super(scene, x, y, 'char_jack');
+
+        scene.add.existing(this);
+        scene.physics.add.existing(this);
+
+        // --- SKALIERUNG ---
+        // Das Asset ist ca 92px hoch. Ein Tile ist 16px.
+        // Der Spieler sollte etwas größer als ein Tile sein (ca. 22-24px).
+        // Scale Factor = 22 / 92 ≈ 0.24
+        this.setScale(0.24);
+        
+        // --- HITBOX ---
+        // Die Hitbox bezieht sich auf die ORIGINAL Größe des Sprites (unskaliert).
+        // Wir wollen eine Hitbox, die nur die Füße abdeckt (zentriert).
+        // Original Breite ~112, Höhe ~92.
+        
+        // Breite: 40% des Bildes
+        // Höhe: 20% des Bildes (nur Füße)
+        // Offset Y: 80% nach unten geschoben
+        this.body.setSize(this.width * 0.4, this.height * 0.2);
+        this.body.setOffset(this.width * 0.3, this.height * 0.75);
+
+        this.body.setCollideWorldBounds(true);
+        this.speed = 80; 
+        
+        this.createAnimations(scene);
+    }
+
+    createAnimations(scene) {
+        // Animationen basierend auf 6 Spalten Layout
+        // Zeile 1 (0-5): Walk
+        // Zeile 2 (6-11): Axe/Hoe
+        // Zeile 3 (12-17): Water
+        
+        if (!scene.anims.exists('walk-down')) {
+            scene.anims.create({
+                key: 'walk-down',
+                frames: scene.anims.generateFrameNumbers('char_jack', { frames: [0, 1] }),
+                frameRate: 6,
+                repeat: -1
             });
+            scene.anims.create({
+                key: 'walk-left',
+                frames: scene.anims.generateFrameNumbers('char_jack', { frames: [2, 3] }),
+                frameRate: 6,
+                repeat: -1
+            });
+            scene.anims.create({
+                key: 'walk-right',
+                frames: scene.anims.generateFrameNumbers('char_jack', { frames: [4, 5] }),
+                frameRate: 6,
+                repeat: -1
+            });
+            // Fallback für Oben (da Sprite fehlt)
+            scene.anims.create({
+                key: 'walk-up',
+                frames: scene.anims.generateFrameNumbers('char_jack', { frames: [0, 1] }),
+                frameRate: 6,
+                repeat: -1
+            });
+        }
+    }
+
+    update(cursors) {
+        const speed = this.speed;
+        this.body.setVelocity(0);
+
+        if (cursors.left.isDown) {
+            this.body.setVelocityX(-speed);
+            this.anims.play('walk-left', true);
+        } else if (cursors.right.isDown) {
+            this.body.setVelocityX(speed);
+            this.anims.play('walk-right', true);
+        } else if (cursors.up.isDown) {
+            this.body.setVelocityY(-speed);
+            this.anims.play('walk-up', true);
+        } else if (cursors.down.isDown) {
+            this.body.setVelocityY(speed);
+            this.anims.play('walk-down', true);
+        } else {
+            this.anims.stop();
+            if (this.anims.currentAnim) {
+                this.anims.setCurrentFrame(this.anims.currentAnim.frames[0]);
+            }
+        }
+    }
+}
             scene.anims.create({
                 key: 'walk-right',
                 // Oft wird rechts nicht extra gezeichnet, sondern links gespiegelt. 
