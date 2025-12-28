@@ -9,6 +9,13 @@ const config = {
     backgroundColor: '#2c3e50',
     parent: 'game-container',
     pixelArt: true, // WICHTIG für Retro-Look (verhindert unscharfe Pixel beim Skalieren)
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 0 }, // Top-Down RPG, keine Schwerkraft
+            debug: true // Vorerst anlassen, um Hitboxen zu sehen
+        }
+    },
     scene: [FarmScene],
     scale: {
         mode: Phaser.Scale.FIT, // Passt sich dem iPad Screen an
