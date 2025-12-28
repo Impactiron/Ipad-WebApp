@@ -1,6 +1,7 @@
 // src/scenes/FarmScene.js
-import { TILE_SIZE, GRID_WIDTH, GRID_HEIGHT, SOIL, OBJECTS } from '../core/Constants.js';
+import { TILE_SIZE, GRID_WIDTH, GRID_HEIGHT, SOIL } from '../core/Constants.js';
 import GridManager from '../data/GridManager.js';
+import Player from '../entities/Player.js';
 
 export default class FarmScene extends Phaser.Scene {
     constructor() {
@@ -8,12 +9,19 @@ export default class FarmScene extends Phaser.Scene {
         this.gridManager = null;
         this.map = null;
         this.layerSoil = null;
-        this.controls = null;
+        this.player = null;
+        this.cursors = null;
     }
 
     preload() {
-        // Wir versuchen, echte Assets zu laden. Wenn nicht vorhanden, generieren wir sie.
-        this.load.image('tiles_farm', './assets/tiles_farm.png');
+        // Assets laden
+        this.load.image('tiles_farm', './assets/tilesets/tiles_farm.png');
+        
+        // Spieler laden: 16px breit, 24px hoch (Jack ist etwas größer als ein Tile)
+        this.load.spritesheet('char_jack', './assets/sprites/char_jack.png', { 
+            frameWidth: 16, 
+            frameHeight: 24 
+        });
     }
 
     create() {
@@ -24,9 +32,14 @@ export default class FarmScene extends Phaser.Scene {
         if (!this.textures.exists('tiles_farm')) {
             this.createPlaceholderTiles();
         }
+        
+        // Fallback für Player, falls Asset fehlt (Debug Rechteck)
+        if (!this.textures.exists('char_jack')) {
+             console.warn('Jack Sprite fehlt. Erstelle Platzhalter.');
+             this.createPlaceholderPlayer();
+        }
 
         // 3. Tilemap Erstellung
-        // Erstellt eine leere Tilemap basierend auf Grid-Größe
         this.map = this.make.tilemap({ 
             tileWidth: TILE_SIZE, 
             tileHeight: TILE_SIZE, 
@@ -34,88 +47,73 @@ export default class FarmScene extends Phaser.Scene {
             height: GRID_HEIGHT 
         });
 
-        // Tileset binden (Name im Cache, Name in Tiled - hier egal da Code-gen)
         const tileset = this.map.addTilesetImage('tiles_farm', 'tiles_farm', TILE_SIZE, TILE_SIZE);
-
-        // Layer erstellen
         this.layerSoil = this.map.createBlankLayer('SoilLayer', tileset);
 
-        // 4. Initiales Rendern (Daten aus GridManager in Tilemap übertragen)
+        // 4. Initiales Rendern
         this.redrawGrid();
 
-        // 5. Kamera Setup
-        // Kamera auf die Weltgröße begrenzen
-        this.cameras.main.setBounds(0, 0, GRID_WIDTH * TILE_SIZE, GRID_HEIGHT * TILE_SIZE);
-        // Zoom für Retro-Look
-        this.cameras.main.setZoom(2);
-        this.cameras.main.centerOn((GRID_WIDTH * TILE_SIZE)/2, (GRID_HEIGHT * TILE_SIZE)/2);
+        // 5. Weltgrenzen für Physik setzen
+        this.physics.world.setBounds(0, 0, GRID_WIDTH * TILE_SIZE, GRID_HEIGHT * TILE_SIZE);
 
-        // 6. Steuerung (Einfache Kamera-Bewegung für Debugging)
+        // 6. Spieler erstellen
+        // Startposition: Mitte der Farm (ungefähr)
+        const startX = (GRID_WIDTH * TILE_SIZE) / 2;
+        const startY = (GRID_HEIGHT * TILE_SIZE) / 2;
+        this.player = new Player(this, startX, startY);
+
+        // 7. Kamera Setup
+        this.cameras.main.setBounds(0, 0, GRID_WIDTH * TILE_SIZE, GRID_HEIGHT * TILE_SIZE);
+        this.cameras.main.setZoom(3); // Zoom 3x für knackigen Pixel-Look auf iPad
+        this.cameras.main.startFollow(this.player, true, 0.1, 0.1); // Weiches Folgen
+
+        // 8. Steuerung
         this.cursors = this.input.keyboard.createCursorKeys();
 
-        // UI Info
-        this.add.text(10, 10, 'HARVEST MOON ENGINE v1.0\nPfeiltasten: Kamera', {
+        // UI Debug Info
+        this.add.text(10, 10, 'HARVEST MOON ENGINE v1.1\nPfeiltasten: Bewegen', {
             font: '10px monospace',
             fill: '#ffffff',
             backgroundColor: '#000000'
-        }).setScrollFactor(0);
+        }).setScrollFactor(0).setDepth(100);
     }
 
     update(time, delta) {
-        // Einfache Kamera-Steuerung
-        const speed = 5;
-        if (this.cursors.left.isDown) this.cameras.main.scrollX -= speed;
-        if (this.cursors.right.isDown) this.cameras.main.scrollX += speed;
-        if (this.cursors.up.isDown) this.cameras.main.scrollY -= speed;
-        if (this.cursors.down.isDown) this.cameras.main.scrollY += speed;
+        // Player Update Loop aufrufen
+        if (this.player) {
+            this.player.update(this.cursors);
+        }
     }
 
-    /**
-     * Synchronisiert das visuelle Tilemap mit den Daten im GridManager.
-     * Dies ist sehr performant, da Tilemaps für solche Operationen gebaut sind.
-     */
     redrawGrid() {
-        // Wir iterieren durch den sichtbaren Bereich (oder alles, bei der Größe ist alles okay)
         for (let y = 0; y < GRID_HEIGHT; y++) {
             for (let x = 0; x < GRID_WIDTH; x++) {
                 const soilState = this.gridManager.getSoilState(x, y);
-                
-                // Mapping: SoilState -> TileIndex (Basierend auf Placeholder Generierung)
-                // 0: Normal (Grün), 1: Gepflügt (Braun), 2: Gegossen (Dunkelbraun)
                 let tileIndex = 0; 
                 
-                if (soilState === SOIL.NORMAL) tileIndex = 0; // Gras
-                else if (soilState === SOIL.HOED) tileIndex = 1; // Erde
-                else if (soilState === SOIL.WATERED) tileIndex = 2; // Nass
+                if (soilState === SOIL.NORMAL) tileIndex = 0;
+                else if (soilState === SOIL.HOED) tileIndex = 1;
+                else if (soilState === SOIL.WATERED) tileIndex = 2;
 
                 this.layerSoil.putTileAt(tileIndex, x, y);
             }
         }
     }
 
-    /**
-     * Generiert eine 3-Tile Textur, falls keine Datei vorhanden ist.
-     * Tile 0: Grün (Gras)
-     * Tile 1: Hellbraun (Erde)
-     * Tile 2: Dunkelbraun (Nass)
-     */
     createPlaceholderTiles() {
-        console.warn('Asset "tiles_farm.png" nicht gefunden. Generiere Platzhalter...');
+        console.warn('Generiere Tile-Platzhalter...');
         const graphics = this.make.graphics({ x: 0, y: 0, add: false });
-        
-        // Tile 0: Gras
-        graphics.fillStyle(0x4caf50); // Grün
-        graphics.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
-        
-        // Tile 1: Erde (Gepflügt)
-        graphics.fillStyle(0x795548); // Braun
-        graphics.fillRect(TILE_SIZE, 0, TILE_SIZE, TILE_SIZE);
-        
-        // Tile 2: Erde (Gegossen)
-        graphics.fillStyle(0x3e2723); // Dunkelbraun
-        graphics.fillRect(TILE_SIZE * 2, 0, TILE_SIZE, TILE_SIZE);
-
-        // Textur generieren (3 Tiles breit, 1 hoch)
+        graphics.fillStyle(0x4caf50); graphics.fillRect(0, 0, TILE_SIZE, TILE_SIZE); // Gras
+        graphics.fillStyle(0x795548); graphics.fillRect(TILE_SIZE, 0, TILE_SIZE, TILE_SIZE); // Erde
+        graphics.fillStyle(0x3e2723); graphics.fillRect(TILE_SIZE * 2, 0, TILE_SIZE, TILE_SIZE); // Nass
         graphics.generateTexture('tiles_farm', TILE_SIZE * 3, TILE_SIZE);
+    }
+
+    createPlaceholderPlayer() {
+        // Erstellt ein einfaches blaues Rechteck als SpriteSheet Ersatz
+        const graphics = this.make.graphics({ x: 0, y: 0, add: false });
+        graphics.fillStyle(0x2196F3); // Blau wie Jacks Overall
+        graphics.fillRect(0, 0, 16, 24);
+        graphics.generateTexture('char_jack', 16, 24); // Single Frame Texture
     }
 }
