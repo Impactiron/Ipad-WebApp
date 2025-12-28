@@ -16,7 +16,7 @@ export default class FarmScene extends Phaser.Scene {
 
     preload() {
         // Tileset laden
-        this.load.image('tiles_farm', './assets/tiles_farm.png');
+        this.load.image('tiles_farm', './assets/tilesets/tiles_farm.png');
         
         // --- WICHTIGE ÄNDERUNG ---
         // Wir laden das Sprite Sheet basierend auf dem Bild, das Sie hochgeladen haben.
@@ -105,4 +105,5 @@ export default class FarmScene extends Phaser.Scene {
         graphics.fillStyle(0xff0000, 0.2); graphics.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
         graphics.generateTexture('ui_selector', TILE_SIZE, TILE_SIZE);
     }
+
 }
