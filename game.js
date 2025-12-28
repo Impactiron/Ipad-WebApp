@@ -8,14 +8,19 @@ const config = {
     height: 600, // Fensterhöhe
     backgroundColor: '#2c3e50',
     parent: 'game-container',
-    pixelArt: true, // WICHTIG für Retro-Look (verhindert unscharfe Pixel beim Skalieren)
+    
+    // WICHTIG für Retro-Look (verhindert unscharfe Pixel beim Skalieren)
+    pixelArt: true, 
+    
+    // Physik Engine Hinzufügen
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 0 }, // Top-Down RPG, keine Schwerkraft
-            debug: true // Vorerst anlassen, um Hitboxen zu sehen
+            gravity: { y: 0 }, // Top-Down Spiel, keine Schwerkraft
+            debug: false       // Setze auf true, um Hitboxen zu sehen
         }
     },
+
     scene: [FarmScene],
     scale: {
         mode: Phaser.Scale.FIT, // Passt sich dem iPad Screen an
