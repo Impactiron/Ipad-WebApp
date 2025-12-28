@@ -4,32 +4,28 @@ project_memory.md
 
 ## Dateibaum
 - index.html
-- game.js
+- game.js (Updated: Physics active)
 - src/core/Constants.js
 - src/data/GridManager.js
-- src/scenes/FarmScene.js
-- src/entities/Player.js  <-- NEU
+- src/entities/Player.js (New: Movement & Auto-Scaling)
+- src/scenes/FarmScene.js (Updated: Player integration)
 
 ## Globale Variablen & State
 - Grid Größe: 60x57 Tiles
 - Tile Größe: 16px
-- Speicher: Uint16Array (Bitmasking aktiv)
-- Player: Arcade Physics Sprite, 16x24px, State Machine (Idle/Walk)
+- Player Speed: 80 px/s
+- Zoom: 2x
 
 ## Letzte Änderung
-- Implementierung Arcade Physics in game.js
-- Erstellung der Player Klasse (Bewegung, Animation, Target-Berechnung)
-- Integration von Player und Kamera in FarmScene
-- Asset Loading für char_jack.png angepasst
+- Implementierung der Arcade Physics in game.js.
+- Erstellung der Player-Entity mit automatischer Skalierung für Assets > 16px.
+- Einbau der Kamera-Verfolgung und Kollision in FarmScene.
 
 ## Nächster Schritt
-- Implementierung der Interaktion (Pflügen, Gießen) basierend auf `player.getTargetPosition()`
-- Implementierung "Smart Touch" UI Overlay (D-Pad Rendering)
+- Implementierung der Interaktion (A-Button für Werkzeugnutzung).
+- Implementierung "Smart Touch" UI Overlay (D-Pad).
 
 ## Aktueller Code-Hash
-- src/core/Constants.js
-- src/data/GridManager.js
-- src/scenes/FarmScene.js
 - src/entities/Player.js
+- src/scenes/FarmScene.js
 - game.js
-- index.html
