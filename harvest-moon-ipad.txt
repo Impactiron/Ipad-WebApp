@@ -1,0 +1,24 @@
+/harvest-moon-ipad
+  /assets
+    /sprites       (Charaktere, Crops)
+    /tilesets      (Boden, Häuser)
+    /ui            (D-Pad, Icons)
+    /audio         (BGM, SFX)
+  /src
+    /core
+      GameConfig.js    (Phaser Setup, iPad Rescaling)
+      Constants.js     (Bitmask-Definitionen)
+    /data
+      GridManager.js   (Das Herz: Uint16Array Logik) 
+      SaveSystem.js    (Base64 JSON Handling) [cite: 115]
+    /entities
+      Player.js        (Bewegung, State Machine)
+      FarmAnimal.js    (KI: Idle, Move, Eat) [cite: 74]
+    /scenes
+      BootScene.js     (Asset Loading)
+      FarmScene.js     (Main Gameplay Loop)
+      UIScene.js       (Overlay Controller)
+    /systems
+      TimeSystem.js    (2.5s Takt, Infinite Night) [cite: 28, 31]
+      InputSystem.js   (Smart Touch logic) 
+  index.html
